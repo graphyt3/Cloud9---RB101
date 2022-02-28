@@ -70,11 +70,20 @@ end
 def computer_places_piece!(brd)
   square = nil
   WINNING_LINES.each do |line|
-      square = find_at_risk_square(line, brd)
+      square = computer_offense(line, brd)
       break if square
   end
   
   if !square
+     WINNING_LINES.each do |line|
+      square = find_at_risk_square(line, brd)
+      break if square
+     end
+  end
+  
+  if !square && brd[5] == INITIAL_MARKER
+    square = 5
+  elsif !square
     square = empty_squares(brd).sample
   end
   
@@ -91,15 +100,18 @@ end
 
 def find_at_risk_square(line, board)
   if board.values_at(line[0], line[1], line[2]).count(PLAYER_MARKER) == 2
-    binding.pry
-    board.select{|key, value| line.include?(key) && value == INITIAL_MARKER}.keys.first
+     board.select{|key, value| line.include?(key) && value == INITIAL_MARKER}.keys.first
   else
-    nil
+     nil
   end
 end
 
-def computer_offense(brd)
-
+def computer_offense(line, board)
+  if board.values_at(line[0], line[1], line[2]).count(COMPUTER_MARKER) == 2
+     board.select{|key, value| line.include?(key) && value == INITIAL_MARKER}.keys.first
+  else
+     nil
+  end
 end
  
 def detect_winner(brd)
