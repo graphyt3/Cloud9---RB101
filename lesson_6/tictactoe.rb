@@ -8,7 +8,7 @@ WINNING_LINES = [[1, 2, 3], [4, 5, 6], [7, 8, 9]] + #rows
 INITIAL_MARKER = ' '
 PLAYER_MARKER = 'X'
 COMPUTER_MARKER = 'O'
-MAX_WINS = 1
+MAX_WINS = 2
 
 # Method Definitions
 # ==================================
@@ -138,7 +138,7 @@ def detect_winner(brd)
 end
 
 def display_score(score_hash)
-  prompt("Score Board - You won: #{score_hash[:player_score]} games, Computer won: #{score_hash[:computer_score]} games.")
+  prompt("[Score Board] You won: #{score_hash[:player_score]} games, Computer won: #{score_hash[:computer_score]} games.")
 end
 
 def update_scores(score_hash, brd)       # updating the scores of the game
@@ -176,12 +176,16 @@ loop do
   prompt("Welcome to Tic Tac Toe!")
   display_score(score)
   prompt("The first to win #{MAX_WINS} games wins!")
-  prompt("Please select who goes first: 1) You 2) Computer 3) Random")
-  current_player = gets.chomp.to_i
-  if current_player == 3
-    current_player = [1, 2].sample
+  loop do
+    prompt("Please select who goes first: 1) You 2) Computer 3) Random")
+    current_player = gets.chomp.to_i
+    break if current_player == 1 || current_player == 2 || current_player == 3
+    prompt("Please enter a valid selection!")
   end
   
+  if current_player == 3
+      current_player = [1, 2].sample
+  end
   
   loop do 
     board = initialize_board
@@ -190,11 +194,6 @@ loop do
       current_move(board, current_player)
       break if someone_won?(board) || board_full?(board)
       current_player = alternate_player(current_player)
-      #if current_player == 1
-      #  current_player = 2
-      #elsif current_player == 2
-      #  current_player = 1
-      #end
     end
     
     update_scores(score, board)
