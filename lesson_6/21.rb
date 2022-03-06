@@ -1,11 +1,29 @@
 # CONSTANTS
 FACES = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
-SUITS = ['hearts', 'diamonds', 'clubs', 'spades']
+SUITS = ['Hearts', 'Diamonds', 'Clubs', 'Spades']
 
 # METHODS
 
 def prompt(msg)
   puts "==>#{msg}"  
+end
+
+def initialize_deck     #initializing deck
+  deck = []
+  FACES.each do |faces|
+    SUITS.each do |suits|
+      temp_holder = []
+      temp_holder << suits
+      temp_holder << faces
+      temp_holder << "#{faces} of #{suits}"    #Name of card to be seen on screen
+      deck << temp_holder
+    end
+  end
+  deck
+end
+
+def shuffle_deck(deck)
+  deck.shuffle!
 end
 
 def calculating_total(hand_dealt)
@@ -29,8 +47,25 @@ def calculating_total(hand_dealt)
   sum
 end
 
-def display_final_score(player_hand, computer_hand)
-  display_hands(player_hand, computer_hand)
+def display_hands(player_hand, computer_hand, computer_turn)
+  system "clear"
+  computer_total = calculating_total(computer_hand)
+  if computer_turn == 'yes'
+    prompt("Computer has: #{computer_total}")
+    prompt(cards_in_hand(computer_hand))
+    puts ""   # creating a space
+  else
+    prompt("Computer has: #{computer_hand[0][2]} and unknown card")
+    puts ""
+  end
+  player_total = calculating_total(player_hand)
+  prompt("You have: #{player_total}")
+  prompt(cards_in_hand(player_hand))
+  puts ""   # creating a space
+end
+
+def display_final_score(player_hand, computer_hand, computer_turn)
+  display_hands(player_hand, computer_hand, computer_turn)
 
   player_score = calculating_total(player_hand)
   computer_score = calculating_total(computer_hand)
@@ -44,51 +79,32 @@ def display_final_score(player_hand, computer_hand)
     prompt("It's a push!")
   elsif computer_score > 21
     prompt("You won!")
-  else
+  else 
     prompt("Computer won!")
   end
 end
 
-def initialize_deck     #initializing deck
-  deck = []
-  FACES.each do |faces|
-    SUITS.each do |suits|
-      temp_holder = []
-      temp_holder << suits
-      temp_holder << faces
-      deck << temp_holder
-    end
+def cards_in_hand(cards)  # to show only the cards in terms of faces/suits
+  count = 0
+  hand_arr = []
+  while count < cards.size
+    hand_arr << cards[count][2]
+    count += 1
   end
-  deck
+  hand_arr
 end
 
-def shuffle_deck(deck)
-  deck.shuffle!
-end
-
-def display_hands(player_hand, computer_hand)
-  system "clear"
-  player_total = calculating_total(player_hand)
-  prompt("Player's hand: #{player_total}")
-  prompt(player_hand)
-  puts ""   # creating a space
-  
-  computer_total = calculating_total(computer_hand)
-  prompt("Computer's hand: #{computer_total}")
-  prompt(computer_hand)
-  puts ""   # creating a space
-end
-
-#gameplay
+#gameplay starts here
 new_deck = initialize_deck
 shuffle_deck(new_deck)
 
 #deal cards
 player_hand_dealt = []
 computer_hand_dealt = []
+computer_win_status = 'no'
+computer_turn = 'no'
 
 count = 0
-
 while count < 2
   player_hand_dealt << new_deck.pop
   computer_hand_dealt << new_deck.pop
@@ -96,14 +112,16 @@ while count < 2
 end
 
 loop do 
-  display_hands(player_hand_dealt, computer_hand_dealt)
+  break if calculating_total(player_hand_dealt) == 21
+  display_hands(player_hand_dealt, computer_hand_dealt, computer_turn)
   
-  prompt("Your turn: Hit (h) or Stay (s)?")
+  prompt("Your turn: Hit or Stay? (Enter 'h' or 's')")
   player_selection = gets.chomp
   
   if player_selection.downcase.start_with?('h')
     player_hand_dealt << new_deck.pop
     if calculating_total(player_hand_dealt) > 21    # quit the game due to BUSTING. Computer wins!
+      computer_win_status = 'yes'
       break
     end
   else
@@ -111,9 +129,10 @@ loop do
   end
 end
 
-display_hands(player_hand_dealt, computer_hand_dealt)
+computer_turn = 'yes'    # to reveal computer's hand
 
 loop do
+  break if computer_win_status == 'yes'
   if calculating_total(computer_hand_dealt) < 17
     computer_hand_dealt << new_deck.pop
     if calculating_total(computer_hand_dealt) > 21   # player wins!
@@ -124,4 +143,4 @@ loop do
   end
 end
 
-display_final_score(player_hand_dealt, computer_hand_dealt)
+display_final_score(player_hand_dealt, computer_hand_dealt, computer_turn)
