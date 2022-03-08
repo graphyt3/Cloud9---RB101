@@ -1,11 +1,17 @@
 # CONSTANTS
 FACES = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
 SUITS = ['Hearts', 'Diamonds', 'Clubs', 'Spades']
+HIGH = 21
+DEALER_BREAK = 17
 
 # METHODS
 
 def prompt(msg)
   puts "==>#{msg}"  
+end
+
+def single_spacer
+  puts ""
 end
 
 def initialize_deck     #initializing deck
@@ -19,14 +25,10 @@ def initialize_deck     #initializing deck
       deck << temp_holder
     end
   end
-  deck
-end
-
-def shuffle_deck(deck)
   deck.shuffle!
 end
 
-def calculating_total(hand_dealt)
+def calculating_total(hand_dealt)        # score of cards in hand
   values = hand_dealt.map {|card| card[1] } # extract all of the values out of each array and store into new array of ONLY the values
   sum = 0
   
@@ -49,35 +51,32 @@ end
 
 def display_hands(player_hand, computer_hand, computer_turn)
   system "clear"
-  computer_total = calculating_total(computer_hand)
+  player_score = calculating_total(player_hand)
+  computer_score = calculating_total(computer_hand)
   if computer_turn == 'yes'
-    prompt("Computer has: #{computer_total}")
-    prompt(cards_in_hand(computer_hand))
-    puts ""   # creating a space
+    prompt("Computer has: #{cards_in_hand(computer_hand)} for a total of #{computer_score}")     # shows computer hand
+    single_spacer     # creating a space
   else
-    prompt("Computer has: #{computer_hand[0][2]} and unknown card")
-    puts ""
+    prompt("Computer has: #{computer_hand[0][2]} and unknown card")                 # hides computer hand
+    single_spacer
   end
-  player_total = calculating_total(player_hand)
-  prompt("You have: #{player_total}")
-  prompt(cards_in_hand(player_hand))
-  puts ""   # creating a space
+  prompt("You have: #{cards_in_hand(player_hand)} for a total of #{player_score}")
+  single_spacer   # creating a space
 end
 
-def display_final_score(player_hand, computer_hand, computer_turn)
+def display_final_score(player_hand, computer_hand, computer_turn)        # determining winner
   display_hands(player_hand, computer_hand, computer_turn)
 
   player_score = calculating_total(player_hand)
   computer_score = calculating_total(computer_hand)
-  
-  prompt("You had: #{player_score} while the computer had: #{computer_score}")
-  if player_score > computer_score && player_score <= 21
+  puts "============================================"
+  if player_score > computer_score && player_score <= HIGH
     prompt("You won!")
-  elsif computer_score > player_score && computer_score <= 21
+  elsif computer_score > player_score && computer_score <= HIGH
     prompt("Computer won!")
   elsif player_score == computer_score
     prompt("It's a push!")
-  elsif computer_score > 21
+  elsif computer_score > HIGH
     prompt("You won!")
   else 
     prompt("Computer won!")
@@ -85,62 +84,73 @@ def display_final_score(player_hand, computer_hand, computer_turn)
 end
 
 def cards_in_hand(cards)  # to show only the cards in terms of faces/suits
-  count = 0
-  hand_arr = []
-  while count < cards.size
-    hand_arr << cards[count][2]
-    count += 1
+  cards_string_array = []
+  cards_string_array = cards.map do |card|
+    card[2]
   end
-  hand_arr
+  cards_string_array.join(', ')
 end
 
 #gameplay starts here
-new_deck = initialize_deck
-shuffle_deck(new_deck)
-
-#deal cards
-player_hand_dealt = []
-computer_hand_dealt = []
-computer_win_status = 'no'
-computer_turn = 'no'
-
-count = 0
-while count < 2
-  player_hand_dealt << new_deck.pop
-  computer_hand_dealt << new_deck.pop
-  count += 1
-end
-
-loop do 
-  break if calculating_total(player_hand_dealt) == 21
-  display_hands(player_hand_dealt, computer_hand_dealt, computer_turn)
-  
-  prompt("Your turn: Hit or Stay? (Enter 'h' or 's')")
-  player_selection = gets.chomp
-  
-  if player_selection.downcase.start_with?('h')
-    player_hand_dealt << new_deck.pop
-    if calculating_total(player_hand_dealt) > 21    # quit the game due to BUSTING. Computer wins!
-      computer_win_status = 'yes'
-      break
-    end
-  else
-    break
-  end
-end
-
-computer_turn = 'yes'    # to reveal computer's hand
-
 loop do
-  break if computer_win_status == 'yes'
-  if calculating_total(computer_hand_dealt) < 17
+  new_deck = initialize_deck
+  
+  #deal cards
+  player_hand_dealt = []
+  computer_hand_dealt = []
+  computer_win_status = 'no'
+  computer_turn = 'no'
+  
+  #initial deal
+  count = 0
+  while count < 2
+    player_hand_dealt << new_deck.pop
     computer_hand_dealt << new_deck.pop
-    if calculating_total(computer_hand_dealt) > 21   # player wins!
+    count += 1
+  end
+  
+  loop do 
+    break if calculating_total(player_hand_dealt) == HIGH          #check to see if player was dealt 21!
+    player_selection = nil
+    display_hands(player_hand_dealt, computer_hand_dealt, computer_turn)
+    puts "============================================"
+    loop do
+      prompt("Your turn: (H)it or (S)tay?")
+      player_selection = gets.chomp.downcase
+      break if player_selection.start_with?('h') || player_selection.start_with?('s')
+      prompt("Please enter 'h' or 's'")
+    end
+    
+    if player_selection.start_with? == 'h'
+      player_hand_dealt << new_deck.pop
+      if calculating_total(player_hand_dealt) > HIGH      # quit the game due to BUSTING. Computer wins!
+        computer_win_status = 'yes'
+        break
+      end
+    else
       break
     end
-  else
-    break
   end
+  
+  computer_turn = 'yes'    # to reveal computer's hand
+  
+  loop do
+    break if computer_win_status == 'yes'
+    if calculating_total(computer_hand_dealt) < DEALER_BREAK
+      computer_hand_dealt << new_deck.pop
+      if calculating_total(computer_hand_dealt) > HIGH  # player wins!
+        break
+      end
+    else
+      break
+    end
+  end
+  
+  display_final_score(player_hand_dealt, computer_hand_dealt, computer_turn)
+  single_spacer
+  prompt("Would you like to play again? (y/n)")
+  answer = gets.chomp
+  break unless answer.downcase.start_with?('y')
 end
-
-display_final_score(player_hand_dealt, computer_hand_dealt, computer_turn)
+system "clear"
+prompt('Thank you for playing!')
