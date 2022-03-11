@@ -4,7 +4,7 @@ FACES = %w[2 3 4 5 6 7 8 9 10 J Q K A].freeze
 SUITS = %w[Hearts Diamonds Clubs Spades].freeze
 HIGH = 21
 DEALER_BREAK = 17
-MAX_WINS = 5
+MAX_WINS = 2
 
 # METHODS
 # ==============================
@@ -27,7 +27,7 @@ def welcome_message
   prompt('Numbered cards are their own value. (I.E 2 = 2).')
   prompt('(J)acks, (Q)ueens, (K)ings are worth 10 each.')
   prompt('(A)ces are worth 1 or 11.')
-  prompt('The first to win 5 rounds is the winner!')
+  prompt("The first to win #{MAX_WINS} rounds is the winner!")
   prompt('=========================================')
   prompt('Press Enter to Start!')
   gets
@@ -128,66 +128,72 @@ end
 
 # gameplay starts here
 # ===============================
-welcome_message
-grand_total_wins = { player_total_wins: 0, computer_total_wins: 0 }
 loop do
-  new_deck = initialize_deck
-  # setting initial game
-  game_score = { player_score: 0, computer_score: 0 }
-  player_hand_dealt = []
-  computer_hand_dealt = []
-  computer_win_status = 'no'
-  computer_turn = 'no'
-
-  # initial deal of cards
-  count = 0
-  while count < 2
-    player_hand_dealt << new_deck.pop
-    computer_hand_dealt << new_deck.pop
-    count += 1
-  end
-
-  game_score[:player_score] = calculating_total(player_hand_dealt)
-  game_score[:computer_score] = calculating_total(computer_hand_dealt)
-
+  welcome_message
+  grand_total_wins = { player_total_wins: 0, computer_total_wins: 0 }
   loop do
-    break if game_score[:player_score] == HIGH # check to see if player was dealt 21!
-
-    player_selection = nil
-    display_hands(player_hand_dealt, computer_hand_dealt, computer_turn, game_score)
-    puts '============================================'
-    loop do
-      prompt('Your turn: (H)it or (S)tay?')
-      player_selection = gets.chomp.downcase
-      break if player_selection.start_with?('h') || player_selection.start_with?('s')
-
-      prompt("Please enter 'h' or 's'")
+    new_deck = initialize_deck
+    # setting initial game
+    game_score = { player_score: 0, computer_score: 0 }
+    player_hand_dealt = []
+    computer_hand_dealt = []
+    computer_win_status = 'no'
+    computer_turn = 'no'
+  
+    # initial deal of cards
+    count = 0
+    while count < 2
+      player_hand_dealt << new_deck.pop
+      computer_hand_dealt << new_deck.pop
+      count += 1
     end
-
-    break unless player_selection.start_with?('h')
-
-    player_hand_dealt << new_deck.pop
+  
     game_score[:player_score] = calculating_total(player_hand_dealt)
-    if busted?(game_score[:player_score]) # quit the game due to BUSTING. Computer wins!
-      computer_win_status = 'yes'
-      break
-    end
-  end
-
-  computer_turn = 'yes' # to reveal computer's hand
-
-  loop do
-    break if computer_win_status == 'yes'
-
-    break if game_score[:computer_score] >= DEALER_BREAK
-
-    computer_hand_dealt << new_deck.pop
     game_score[:computer_score] = calculating_total(computer_hand_dealt)
-    break if busted?(game_score[:computer_score]) # player wins!
+  
+    loop do
+      break if game_score[:player_score] == HIGH # check to see if player was dealt 21!
+  
+      player_selection = nil
+      display_hands(player_hand_dealt, computer_hand_dealt, computer_turn, game_score)
+      puts '============================================'
+      loop do
+        prompt('Your turn: (H)it or (S)tay?')
+        player_selection = gets.chomp.downcase
+        break if player_selection.start_with?('h') || player_selection.start_with?('s')
+  
+        prompt("Please enter 'h' or 's'")
+      end
+  
+      break unless player_selection.start_with?('h')
+  
+      player_hand_dealt << new_deck.pop
+      game_score[:player_score] = calculating_total(player_hand_dealt)
+      if busted?(game_score[:player_score]) # quit the game due to BUSTING. Computer wins!
+        computer_win_status = 'yes'
+        break
+      end
+    end
+  
+    computer_turn = 'yes' # to reveal computer's hand
+  
+    loop do
+      break if computer_win_status == 'yes'
+  
+      break if game_score[:computer_score] >= DEALER_BREAK
+  
+      computer_hand_dealt << new_deck.pop
+      game_score[:computer_score] = calculating_total(computer_hand_dealt)
+      break if busted?(game_score[:computer_score]) # player wins!
+    end
+  
+    display_final_score(player_hand_dealt, computer_hand_dealt, computer_turn, game_score, grand_total_wins)
+    single_spacer
+    break if grand_total_wins[:player_total_wins] == MAX_WINS || grand_total_wins[:computer_total_wins] == MAX_WINS
+    prompt('Press Enter to continue')
+    gets
   end
-
-  display_final_score(player_hand_dealt, computer_hand_dealt, computer_turn, game_score, grand_total_wins)
-  single_spacer
+  prompt('Game over!')
   break unless play_again?
 end
 system 'clear'
