@@ -1,17 +1,36 @@
 # CONSTANTS
-FACES = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
-SUITS = ['Hearts', 'Diamonds', 'Clubs', 'Spades']
+# ==============================
+FACES = %w[2 3 4 5 6 7 8 9 10 J Q K A].freeze
+SUITS = %w[Hearts Diamonds Clubs Spades].freeze
 HIGH = 21
 DEALER_BREAK = 17
+MAX_WINS = 5
 
 # METHODS
-
+# ==============================
 def prompt(msg)
-  puts "==>#{msg}"
+  puts "==> #{msg}"
 end
 
 def single_spacer
   puts ''
+end
+
+# rubocop:disable Metrics/MethodLength, Metrics/AbcSize
+def welcome_message
+  system 'clear'
+  prompt('Welcome to Twenty-One!')
+  prompt('=========================================')
+  prompt('Instructions to play:')
+  prompt('You will be playing against the computer.')
+  prompt('The goal is to get as close to 21 without going over.')
+  prompt('Numbered cards are their own value. (I.E 2 = 2).')
+  prompt('(J)acks, (Q)ueens, (K)ings are worth 10 each.')
+  prompt('(A)ces are worth 1 or 11.')
+  prompt('The first to win 5 rounds is the winner!')
+  prompt('=========================================')
+  prompt('Press Enter to Start!')
+  gets
 end
 
 # initializing deck
@@ -31,11 +50,11 @@ end
 
 # score of cards in hand
 def calculating_total(hand_dealt)
-  values = hand_dealt.map { |card| card[1] } # extract all of the values out of each array and store into new array of ONLY the values
+  values = hand_dealt.map { |card| card[1] } # extract all values from each array & store into new array of ONLY values
   sum = 0
 
   values.each do |str|
-    if str == 'J' || str == 'Q' || str == 'K'
+    if 'JQK'.include?(str) # if str == 'J' || str == 'Q' || str == 'K'
       sum += 10
     elsif str == 'A'
       sum += 11
@@ -51,39 +70,52 @@ def calculating_total(hand_dealt)
   sum
 end
 
-def display_hands(player_hand, computer_hand, computer_turn)
+def display_hands(player_hand, computer_hand, computer_turn, game_scoreboard)
   system 'clear'
-  player_score = calculating_total(player_hand)
-  computer_score = calculating_total(computer_hand)
-  if computer_turn == 'yes'
-    prompt("Computer has: #{cards_in_hand(computer_hand)} for a total of #{computer_score}") # shows computer hand
-    single_spacer # creating a space
+
+  if computer_turn == 'yes' # to show computer hand
+    prompt("Computer has: #{cards_in_hand(computer_hand)} for a total of #{game_scoreboard[:computer_score]}")
   else
     prompt("Computer has: #{computer_hand[0][2]} and unknown card") # hides computer hand
-    single_spacer
   end
-  prompt("You have: #{cards_in_hand(player_hand)} for a total of #{player_score}")
+  single_spacer # creating a space
+  prompt("You have: #{cards_in_hand(player_hand)} for a total of #{game_scoreboard[:player_score]}")
   single_spacer # creating a space
 end
 
 # determining winner
-def display_final_score(player_hand, computer_hand, computer_turn)
-  display_hands(player_hand, computer_hand, computer_turn)
+def display_final_score(player_hand, computer_hand, computer_turn, game_scoreboard, total_wins)
+  display_hands(player_hand, computer_hand, computer_turn, game_scoreboard)
 
-  player_score = calculating_total(player_hand)
-  computer_score = calculating_total(computer_hand)
   puts '============================================'
-  if player_score > computer_score && player_score <= HIGH
+  if game_scoreboard[:player_score] > game_scoreboard[:computer_score] && !busted?(game_scoreboard[:player_score])
+    total_wins[:player_total_wins] += 1
     prompt('You won!')
-  elsif computer_score > player_score && computer_score <= HIGH
+  elsif game_scoreboard[:computer_score] > game_scoreboard[:player_score] && !busted?(game_scoreboard[:computer_score])
+    total_wins[:computer_total_wins] += 1
     prompt('Computer won!')
-  elsif player_score == computer_score
+  elsif game_scoreboard[:player_score] == game_scoreboard[:computer_score]
     prompt("It's a push!")
-  elsif computer_score > HIGH
+  elsif busted?(game_scoreboard[:computer_score]) # computer busted?
+    total_wins[:player_total_wins] += 1
     prompt('You won!')
   else
-    prompt('Computer won!')
+    total_wins[:computer_total_wins] += 1
+    prompt('Computer won!') # player busted?
   end
+  prompt("Grand Total Wins:: Player: #{total_wins[:player_total_wins]}| Computer: #{total_wins[:computer_total_wins]}")
+end
+# rubocop:enable Metrics/MethodLength, Metrics/AbcSize
+
+def busted?(hand)
+  # calculating_total(hand) > HIGH
+  hand > HIGH
+end
+
+def play_again?
+  prompt('Would you like to play again? (y/n)')
+  answer = gets.chomp
+  answer.downcase.start_with?('y')
 end
 
 # to show only the cards in terms of faces/suits
@@ -95,16 +127,19 @@ def cards_in_hand(cards)
 end
 
 # gameplay starts here
+# ===============================
+welcome_message
+grand_total_wins = { player_total_wins: 0, computer_total_wins: 0 }
 loop do
   new_deck = initialize_deck
-
-  # deal cards
+  # setting initial game
+  game_score = { player_score: 0, computer_score: 0 }
   player_hand_dealt = []
   computer_hand_dealt = []
   computer_win_status = 'no'
   computer_turn = 'no'
 
-  # initial deal
+  # initial deal of cards
   count = 0
   while count < 2
     player_hand_dealt << new_deck.pop
@@ -112,11 +147,14 @@ loop do
     count += 1
   end
 
+  game_score[:player_score] = calculating_total(player_hand_dealt)
+  game_score[:computer_score] = calculating_total(computer_hand_dealt)
+
   loop do
-    break if calculating_total(player_hand_dealt) == HIGH # check to see if player was dealt 21!
+    break if game_score[:player_score] == HIGH # check to see if player was dealt 21!
 
     player_selection = nil
-    display_hands(player_hand_dealt, computer_hand_dealt, computer_turn)
+    display_hands(player_hand_dealt, computer_hand_dealt, computer_turn, game_score)
     puts '============================================'
     loop do
       prompt('Your turn: (H)it or (S)tay?')
@@ -126,13 +164,12 @@ loop do
       prompt("Please enter 'h' or 's'")
     end
 
-    if player_selection.start_with?('h')
-      player_hand_dealt << new_deck.pop
-      if calculating_total(player_hand_dealt) > HIGH # quit the game due to BUSTING. Computer wins!
-        computer_win_status = 'yes'
-        break
-      end
-    else
+    break unless player_selection.start_with?('h')
+
+    player_hand_dealt << new_deck.pop
+    game_score[:player_score] = calculating_total(player_hand_dealt)
+    if busted?(game_score[:player_score]) # quit the game due to BUSTING. Computer wins!
+      computer_win_status = 'yes'
       break
     end
   end
@@ -142,17 +179,16 @@ loop do
   loop do
     break if computer_win_status == 'yes'
 
-    break if calculating_total(computer_hand_dealt) >= DEALER_BREAK
+    break if game_score[:computer_score] >= DEALER_BREAK
 
     computer_hand_dealt << new_deck.pop
-    break if calculating_total(computer_hand_dealt) > HIGH # player wins!
+    game_score[:computer_score] = calculating_total(computer_hand_dealt)
+    break if busted?(game_score[:computer_score]) # player wins!
   end
 
-  display_final_score(player_hand_dealt, computer_hand_dealt, computer_turn)
+  display_final_score(player_hand_dealt, computer_hand_dealt, computer_turn, game_score, grand_total_wins)
   single_spacer
-  prompt('Would you like to play again? (y/n)')
-  answer = gets.chomp
-  break unless answer.downcase.start_with?('y')
+  break unless play_again?
 end
 system 'clear'
 prompt('Thank you for playing!')
