@@ -4,7 +4,7 @@ FACES = %w[2 3 4 5 6 7 8 9 10 J Q K A].freeze
 SUITS = %w[Hearts Diamonds Clubs Spades].freeze
 HIGH = 21
 DEALER_BREAK = 17
-MAX_WINS = 2
+MAX_WINS = 3
 
 # METHODS
 # ==============================
