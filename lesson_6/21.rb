@@ -98,10 +98,10 @@ def display_final_score(player_hand, computer_hand, computer_turn, game_scoreboa
     prompt("It's a push!")
   elsif busted?(game_scoreboard[:computer_score]) # computer busted?
     total_wins[:player_total_wins] += 1
-    prompt('You won!')
+    prompt('Computer BUSTED - You won!')
   else
     total_wins[:computer_total_wins] += 1
-    prompt('Computer won!') # player busted?
+    prompt('You BUSTED - Computer won!') # player busted?
   end
   prompt("Grand Total Wins:: Player: #{total_wins[:player_total_wins]}| Computer: #{total_wins[:computer_total_wins]}")
 end
