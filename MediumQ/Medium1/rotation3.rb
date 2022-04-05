@@ -1,12 +1,5 @@
 def rotate_array(array)
-  temporary_holder = array[0]
-  new_array = []
-  counter = 1
-  while counter < array.size
-    new_array << array[counter]
-    counter += 1
-  end
-  new_array << temporary_holder
+  array[1..-1] + [array[0]]
 end
 
 def rotate_rightmost_digits(original_number, digits)
@@ -16,11 +9,17 @@ def rotate_rightmost_digits(original_number, digits)
 end
 
 def max_rotation(number)
-  rotate_rightmost_digits(number, number.digits)
+  count = number.to_s.chars.size
+  while count > 1
+    number = rotate_rightmost_digits(number, count)
+    count -= 1
+  end
+  number
 end
 
-p max_rotation(735291) #== 321579
-#max_rotation(3) == 3
-#max_rotation(35) == 53
-#max_rotation(105) == 15 # the leading zero gets dropped
-#max_rotation(8_703_529_146) == 7_321_609_845
+p max_rotation(12345)
+p max_rotation(735291) == 321579
+p max_rotation(3) == 3
+p max_rotation(35) == 53
+p max_rotation(105) == 15 # the leading zero gets dropped
+p max_rotation(8_703_529_146) == 7_321_609_845
